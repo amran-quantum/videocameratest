@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Record Video Stream</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+</head>
+
+<body>
+    <!-- video tag without attribute control-->
+    <video id="video" autoplay muted playsinline></video>
+    <button id="display" onclick="display()">Camera View</button>
+    <button id="start" onclick="startRecording()">Start Recording</button>
+    <button id="stop" onclick="endRecording()">Stop Recording</button>
+
+
+    <script>
+        let blobs = [];
+        let stream, mediaRecorder, blob;
+        let video = document.getElementById("video");
+        var displaying = false;
+        var recording = false;
+        async function display() {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: true,
+            });
+            video.srcObject = stream;
+            displaying = true;
+        }
+        async function startRecording() {
+            if (displaying) {
+                // Stop all tracks of current stream
+                stream.getTracks().forEach((track) => {
+                    track.stop();
+                });
+                // Create new stream in order to start the timestamp from 0:
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: true,
+                });
+                // Switch on controls:
+                video.setAttribute('controls', true);
+                video.srcObject = stream;
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data) {
+                        blobs.push(event.data);
+                    }
+                };
+                mediaRecorder.onstop = doPreview;
+                // Let's receive 1 second blobs
+                mediaRecorder.start(1000);
+                recording = true;
+            }
+        }
+        function endRecording() {
+            if (recording) {
+                // Let's stop capture and recording
+                mediaRecorder.stop();
+                stream.getTracks().forEach((track) => track.stop());
+                recording = false;
+            }
+        }
+        function doPreview() {
+            if (!blobs.length) {
+                return;
+            }
+            // Let's concatenate blobs to preview the recorded content
+            blob = new Blob(blobs, { type: mediaRecorder.mimeType });
+            video.srcObject = null;
+            video.src = URL.createObjectURL(
+                blob,
+            );
+        }
+    </script>
+</body>
