@@ -67,7 +67,10 @@
                 return;
             }
             // Let's concatenate blobs to preview the recorded content
-            blob = new Blob(blobs, { type: mediaRecorder.mimeType });
+           // blob = new Blob(blobs, { type: mediaRecorder.mimeType });
+             blob = new Blob(blobs, { type: "video/webm;codecs=h264" });
+       
+            
             video.srcObject = null;
             video.src = URL.createObjectURL(
                 blob,
